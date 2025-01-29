@@ -5,7 +5,7 @@ class ApiError extends Error {
         error = [],
         stack = ""
     ) {
-        super(message); // Correct spelling of "super"
+        super(message); 
         this.statuscode = statuscode;
         this.data = null;
         this.message = message;
