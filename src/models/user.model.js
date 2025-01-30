@@ -54,20 +54,20 @@ const userSchema = new Schema(
 }
 )
 
-userSchema.pre("save", async function (next)  { 
+userSchema.pre("save", async function (next)  { // before saving the password we are hashing it
         if(!this.isModified("password")) return next();
 
         this.password = bcrypt.hash(this.password, 10)
         next()
  })
 
- userSchema.methods.isPasswordCorrect = async function(password){
+ userSchema.methods.isPasswordCorrect = async function(password){// comparing hashed password with the password in database
       await bcrypt.compare(password, this.password)
  }
 
 
  userSchema.methods.generateAccessToken = function(){
-    return jwt.sign({
+    return jwt.sign({//returning an json web token that is sent to client side once the authentication is done so that to authorize that the client is vaide who is requesting and fullfilling his request.
         _id:this._id,
         email:this.email,
         username :this.username,
@@ -88,4 +88,4 @@ userSchema.pre("save", async function (next)  {
 }
 )}
 
-export const user = moongose.model("User",userSchema)
+export const user = mongoose.model("User",userSchema)
