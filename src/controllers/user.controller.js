@@ -35,7 +35,7 @@ const register = asyncHandler( async (req,res)=>{
     //     throw new ApiError(100,"The username already exist give some new name")
     // }
    
-    const existedUser = user.findOne({
+    const existedUser = await user.findOne({
         $or : [{username}, {email}]
     })
 

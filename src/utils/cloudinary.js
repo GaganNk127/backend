@@ -1,4 +1,5 @@
 import {v2 as cloudinary} from "cloudinary"
+import { response } from "express";
 import fs from "fs"
 
 cloudinary.config({ 
@@ -9,11 +10,12 @@ cloudinary.config({
 
 
 
-const uploadResult = async ( localfilepath )=> await cloudinary.uploader
-       .upload(
-           'https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg', {
+const uploadResult = async ( localfilepath )=> await cloudinary.uploader.upload(
+           localfilepath, {
                resource_type : "auto"
-           }
+           },
+           fs.unlink(localfilepath)
+           
        )
        .catch((error) => {
             fs.unlinkSync(localfilepath)// remove the temperoary saved local file path from the upload.
