@@ -1,8 +1,28 @@
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
-import { user } from "../models/user.model.js"
+import { User } from "../models/user.model.js"
 import { uploadResult} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+
+const generateAccessTokenandRefreshToken = async(userId)=>{
+   
+   try{
+    const user = User.findById(userId);
+    const accessToken = User.generateAccessToken();
+    const refreshToken = User.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await User.save({validateBeforeSave : false})
+    return {accessToken,refreshToken}
+   } catch(e){
+    throw new ApiError(500, "We are uable to generate accessToken");
+   }
+
+    
+}
+
+
+
 const register = asyncHandler( async (req,res)=>{
    //get user details from frontend
    //validation not empty
@@ -84,4 +104,31 @@ const register = asyncHandler( async (req,res)=>{
 
 })
 
-export{register}
+
+const loginuser = asyncHandler(async (req,res)=>{
+    const {username, email, password} = req.body;
+
+    if([username,email,password].some((field)=>field == ""))
+    {
+        throw new  ApiError(404, "All fields are necessary");
+    }
+
+    const user = await User.findOne(
+        $or = [{username},{email}]);
+
+    if(!user)
+    {
+        throw new  ApiError(404, "The user is not there");
+    }
+
+    const ispasswordvalid = await user.isPasswordCorrect(password);
+})
+
+
+const {accessToken, refreshToken} = await generateAccessTokenandRefreshToken(User._id);
+
+export{register,
+    loginuser,
+    accessToken,
+    refreshToken
+}
