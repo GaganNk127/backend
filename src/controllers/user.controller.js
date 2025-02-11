@@ -7,12 +7,12 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 const generateAccessTokenandRefreshToken = async(userId)=>{
    
    try{
-    const user = User.findById(userId);
+    const user = await User.findById(userId);
     const accessToken = User.generateAccessToken();
     const refreshToken = User.generateRefreshToken();
 
-    user.refreshToken = refreshToken;
-    await User.save({validateBeforeSave : false})
+    user.refreshToken = refreshToken;// we store the refresh token in database also
+    await user.save({validateBeforeSave : false})// validation 
     return {accessToken,refreshToken}
    } catch(e){
     throw new ApiError(500, "We are uable to generate accessToken");
@@ -122,10 +122,32 @@ const loginuser = asyncHandler(async (req,res)=>{
     }
 
     const ispasswordvalid = await user.isPasswordCorrect(password);
+
+    if(!ispasswordvalid)
+    {
+        throw new ApiError(404, "Password invalid")
+    }
+
+    const {accessToken, refreshToken} = await generateAccessTokenandRefreshToken(User._id);
+    const loggeginuser = await User.findById(user.__id)
+    select("-password -refreshToken")
+
+    const options = {
+        httpOnly :true,
+        secure:true // this make it imposible to modify the cookies from frontend and only server can modify it
+    }
+
+    return res.status(200).cookie("acceToken",accessToken,options).cookie("refreshToken",refreshToken,options).json(
+        new ApiResponse(200,{
+            user: loggeginuser,accessToken,refreshToken
+        },
+    "user logged in succefully")
+    )
+
 })
 
 
-const {accessToken, refreshToken} = await generateAccessTokenandRefreshToken(User._id);
+
 
 export{register,
     loginuser,

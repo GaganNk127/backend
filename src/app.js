@@ -9,6 +9,7 @@ app.use(cors({
     credentials : true 
 }))
 
+//converts the json object to req.body.
 app.use(express.json({
     limit : "20kb"
 }))
