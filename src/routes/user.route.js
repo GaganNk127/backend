@@ -20,4 +20,7 @@ router.route("/register").post(
 
 router.route('/login').post(loginuser);
 
+// session logout routes
+router.route('/logout').post(verifyJWT, log)
+
 export default router

@@ -144,13 +144,27 @@ const loginuser = asyncHandler(async (req,res)=>{
     "user logged in succefully")
     )
 
+const logoutUser = asyncHandler( async(req,res)=>{
+     await User.findByIdandUpdate(
+        req.user.__id,
+        {
+            $set : {
+                refreshToken : undefined;
+            }
+        }
+    )
+    const options = {
+        httpOnly :true,
+        secure:true // this make it imposible to modify the cookies from frontend and only server can modify it
+    }
+
+    return res.status(200)
+    .clearcookies("accessToken",options)
+    .clearcookies("refreshToken",options)
 })
 
-
-
-
+})
 export{register,
     loginuser,
-    accessToken,
-    refreshToken
+    logoutUser
 }
