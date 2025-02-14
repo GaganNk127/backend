@@ -81,7 +81,7 @@ const register = asyncHandler( async (req,res)=>{
         throw new ApiError(404, "  ")
     }
 
-    const user = user.create({fullName,
+    const user = User.create({fullName,
         avatar : avatar.url,
         coverImage : coverImage?.url||"",
         email,
@@ -130,14 +130,14 @@ const loginuser = asyncHandler(async (req,res)=>{
 
     const {accessToken, refreshToken} = await generateAccessTokenandRefreshToken(User._id);
     const loggeginuser = await User.findById(user.__id)
-    select("-password -refreshToken")
+    .select("-password -refreshToken")
 
     const options = {
         httpOnly :true,
         secure:true // this make it imposible to modify the cookies from frontend and only server can modify it
     }
 
-    return res.status(200).cookie("acceToken",accessToken,options).cookie("refreshToken",refreshToken,options).json(
+    return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",refreshToken,options).json(
         new ApiResponse(200,{
             user: loggeginuser,accessToken,refreshToken
         },
@@ -149,7 +149,7 @@ const logoutUser = asyncHandler( async(req,res)=>{
         req.user.__id,
         {
             $set : {
-                refreshToken : undefined;
+                refreshToken : undefined
             }
         }
     )
@@ -163,8 +163,42 @@ const logoutUser = asyncHandler( async(req,res)=>{
     .clearcookies("refreshToken",options)
 })
 
+const refreshAccessToken = asyncHandler(async(req,res)=>{
+   const incomingrefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+   if(!incomingrefreshToken){
+    throw new ApiError(401, "no refresh token")
+   }
+
+   const verified = jwt.verify(incomingrefreshToken,process.env.REFERSH_TOKEN_SECRET)
+   const user = await User.findById(verified?.__id);
+   if(!user)
+   {
+    throw new ApiError(401, "Invalid refresh token")
+   }
+   if(incomingrefreshToken !== user?.refreshToken)
+   {
+    throw new ApiError(401, "refresh token is ecpired or used")
+   }
+
+   const options = {
+    httpOnly : true,
+    secure : true
+   }
+
+  const {accessToken,newrefreshToken} = await generateAccessTokenandRefreshToken(user.__id)
+
+   req.status(200).cookies("newrefreshToken",options).cookies("accessToken",options).json(
+    new ApiResponse(200,
+        {accessToken, refreshToken : newrefreshToken},"Access Token refershed successfully"
+     )
+   ) 
+
+})
+
 })
 export{register,
     loginuser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
 }
